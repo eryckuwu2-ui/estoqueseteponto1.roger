@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Insumos • Controle Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"SF Pro Display"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap');
+        
+        :root {
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .apple-header {
+            background: linear-gradient(to right, #f8f9fa, #f1f3f5);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+            transition: background 0.3s ease;
+        }
+        
+        .dark .apple-header {
+            background: linear-gradient(to right, #18181b, #09090b);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.05);
+        }
+        
+        .card-hover { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .dark .card-hover:hover {
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+        }
+        
+        .modal { animation: modalPop 0.3s ease; }
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
+
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-zinc-900 p-10 rounded-3xl shadow-xl border border-zinc-100 dark:border-zinc-800 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 bg-black dark:bg-white text-white dark:text-black rounded-2xl flex items-center justify-center text-3xl font-bold mx-auto mb-4"></div>
+                <h1 class="text-2xl font-semibold tracking-tight">Gestão de Insumos</h1>
+                <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2">Faça login para acessar o sistema</p>
+            </div>
+            
+            <form id="login-form" onsubmit="realizarLogin(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">E-mail</label>
+                        <input type="email" id="login-email" required class="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 focus:outline-none focus:border-black dark:focus:border-white transition-colors" placeholder="seu@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Senha</label>
+                        <input type="password" id="login-senha" required class="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 focus:outline-none focus:border-black dark:focus:border-white transition-colors" placeholder="••••••">
+                    </div>
+                    <p id="login-erro" class="text-red-500 text-sm hidden text-center">Credenciais inválidas.</p>
+                    <button type="submit" class="w-full bg-black dark:bg-white text-white dark:text-black font-medium py-4 rounded-2xl mt-6 hover:opacity-90 transition-opacity">
+                        ENTRAR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <header class="apple-header sticky top-0 z-50 border-b border-zinc-200 dark:border-zinc-800">
+            <div class="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-black dark:bg-white text-white dark:text-black rounded-2xl flex items-center justify-center text-2xl font-bold"></div>
+                    <h1 class="text-2xl font-semibold tracking-tight">Gestão de Insumos</h1>
+                    <span class="text-sm font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-3xl">IA Ativa</span>
+                </div>
+                
+                <nav class="flex items-center gap-8 text-sm font-medium">
+                    <a onclick="showSection('dashboard')" class="cursor-pointer hover:opacity-70 flex items-center gap-1">
+                        <i class="fa-solid fa-gauge-high"></i> <span>Dashboard</span>
+                    </a>
+                    <a onclick="showSection('cadastrar')" class="cursor-pointer hover:opacity-70 flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> <span>Cadastrar</span>
+                    </a>
+                    <a onclick="showSection('editar')" class="cursor-pointer hover:opacity-70 flex items-center gap-1">
+                        <i class="fa-solid fa-pen"></i> <span>Editar</span>
+                    </a>
+                    <a onclick="showSection('estoque')" class="cursor-pointer hover:opacity-70 flex items-center gap-1">
+                        <i class="fa-solid fa-boxes-stacked"></i> <span>Ver Estoque</span>
+                    </a>
+                    <a onclick="showSection('ia')" class="cursor-pointer bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-3xl hover:opacity-90 transition-opacity flex items-center gap-1">
+                        <i class="fa-solid fa-robot"></i> <span>Assistente IA</span>
+                    </a>
+                </nav>
+
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleDarkMode()" class="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors text-lg">
+                        <i class="fa-solid fa-circle-half-stroke"></i>
+                    </button>
+                    
+                    <div onclick="simularNotificacao()" class="flex items-center gap-2 text-sm cursor-pointer">
+                        <i class="fa-solid fa-bell text-amber-500"></i>
+                        <span id="notif-count" class="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 border-l border-zinc-300 dark:border-zinc-700 pl-4 ml-2">
+                        <div class="text-right">
+                            <div id="user-display-name" class="text-sm font-medium">Usuário</div>
+                            <button onclick="fazerLogout()" class="text-xs text-red-500 hover:underline">Sair</button>
+                        </div>
+                        <div class="w-8 h-8 bg-zinc-800 dark:bg-zinc-200 text-white dark:text-black rounded-2xl flex items-center justify-center text-lg">👤</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-8 py-8">
+
+            <div id="section-dashboard" class="section">
+                <h2 id="greeting-title" class="text-3xl font-semibold mb-8">Olá! 👋</h2>
+                
+                <div class="grid grid-cols-4 gap-6">
+                    <div id="card-total-valor" class="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Valor total em estoque</p>
+                                <p id="total-valor" class="text-4xl font-semibold mt-2 text-zinc-900 dark:text-white">R$ 0</p>
+                            </div>
+                            <i class="fa-solid fa-wallet text-4xl text-emerald-500"></i>
+                        </div>
+                        <p class="text-xs text-emerald-600 mt-6 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-trend-up"></i> Valorização ativa
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Itens em alerta</p>
+                                <p id="alerta-count" class="text-4xl font-semibold mt-2 text-amber-600">0</p>
+                            </div>
+                            <i class="fa-solid fa-triangle-exclamation text-4xl text-amber-500"></i>
+                        </div>
+                        <button onclick="showSection('ia')" class="mt-6 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 px-4 py-2 rounded-2xl flex items-center gap-2 hover:opacity-80">
+                            <i class="fa-solid fa-robot"></i> RESOLVER AGORA
+                        </button>
+                    </div>
+
+                    <div id="card-vendas-hoje" class="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Vendas hoje</p>
+                                <p id="vendas-hoje" class="text-4xl font-semibold mt-2 text-zinc-900 dark:text-white">R$ 0</p>
+                            </div>
+                            <i class="fa-solid fa-credit-card text-4xl text-blue-500"></i>
+                        </div>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-6">Métodos processados</p>
+                    </div>
+                    
+                    <div id="card-vendas-qtd" class="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800 hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Vendas hoje (Qtd)</p>
+                                <p id="vendas-hoje-qtd" class="text-4xl font-semibold mt-2 text-zinc-900 dark:text-white">14 un.</p>
+                            </div>
+                            <i class="fa-solid fa-box-open text-4xl text-blue-500"></i>
+                        </div>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-6">Contagem diária</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-emerald-200 dark:border-emerald-900">
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400">Qtd. Total de Aparelhos</p>
+                        <p id="total-qtd-estoque" class="text-4xl font-semibold mt-2 text-zinc-900 dark:text-white">0</p>
+                        <p class="text-xs text-emerald-600 mt-4">Estoque físico atual</p>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <h3 class="font-medium mb-4 flex items-center gap-2"><i class="fa-solid fa-chart-line"></i> Produtos no sistema</h3>
+                    <div id="destaque-vendas" class="grid grid-cols-5 gap-4"></div>
+                </div>
+            </div>
+
+            <div id="section-cadastrar" class="section hidden">
+                <h2 class="text-3xl font-semibold mb-8">Cadastrar Novo Produto</h2>
+                <div class="max-w-2xl bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800">
+                    <form onsubmit="cadastrarProduto(event)">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm mb-2 font-medium">Tipo de Produto</label>
+                                <select id="tipo" class="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-4 focus:outline-none focus:border-black dark:focus:border-white">
+                                    <option value="smartphone">📱 Smartphone</option>
+                                    <option value="notebook">💻 Notebook</option>
+                                    <option value="tablet">📟 Tablet</option>
+                                    <option value="airpods">🎧 AirPods / Headphones</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2 font-medium">Modelo</label>
+                                <select id="modelo" class="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-4 focus:outline-none focus:border-black dark:focus:border-white" required>
+                                    <optgroup label="iPhones">
+                                        <option value="iPhone 13">iPhone 13</option>
+                                        <option value="iPhone 14">iPhone 14</option>
+                                        <option value="iPhone 15">iPhone 15</option>
+                                        <option value="iPhone 16">iPhone 16</option>
+                                        <option value="iPhone 16e">iPhone 16e</option>
+                                        <option value="iPhone 17">iPhone 17</option>
+                                        <option value="iPhone 17 air">iPhone 17 air</option>
+                                        <option value="iPhone 17 pro">iPhone 17 pro</option>
+                                        <option value="iPhone 17 pro Max">iPhone 17 pro Max</option>
+                                    </optgroup>
+                                    <optgroup label="Outros (Exemplos)">
+                                        <option value="MacBook M1">MacBook M1</option>
+                                        <option value="AirPods 4">AirPods 4</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-6 mt-6">
+                            <div>
+                                <label class="block text-sm mb-2 font-medium">Quantidade</label>
+                                <input id="quantidade" type="number" min="1" class="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-4 focus:outline-none focus:border-black dark:focus:border-white" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2 font-medium">Valor Unitário Venda (R$)</label>
+                                <input id="valor" type="number" step="0.01" min="0" placeholder="Ex: 8500.00" class="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-4 focus:outline-none focus:border-black dark:focus:border-white" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="mt-10 w-full bg-black dark:bg-white text-white dark:text-black py-5 rounded-3xl font-medium text-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity">
+                            <i class="fa-solid fa-plus"></i>
+                            CADASTRAR PRODUTO
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="section-editar" class="section hidden">
+                <h2 class="text-3xl font-semibold mb-8">Editar ou Excluir Produtos</h2>
+                <div id="lista-editar" class="grid grid-cols-3 gap-6"></div>
+            </div>
+
+            <div id="section-estoque" class="section hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-semibold">Estoque Atual</h2>
+                    <input id="busca" type="text" placeholder="🔎 Buscar por modelo..." 
+                           onkeyup="filtrarEstoque()" class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-4 w-80 focus:outline-none focus:border-black dark:focus:border-white">
+                </div>
+                <div id="grid-estoque" class="grid grid-cols-4 gap-6"></div>
+            </div>
+
+            <div id="section-ia" class="section hidden">
+                <div class="flex gap-8">
+                    <div class="flex-1">
+                        <h2 class="text-3xl font-semibold mb-8">Assistente Inteligente</h2>
+                        <button onclick="analisarEstoqueIA()" 
+                                class="mb-8 px-8 py-4 bg-gradient-to-r from-black to-zinc-800 dark:from-white dark:to-zinc-200 text-white dark:text-black rounded-3xl font-medium flex items-center gap-3 text-lg hover:opacity-90">
+                            <i class="fa-solid fa-robot animate-pulse"></i>
+                            GERAR ANÁLISE DO ESTOQUE
+                        </button>
+                        
+                        <div id="resultado-ia" class="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800 hidden">
+                            <h3 class="font-medium text-lg mb-6">📊 Status de Alertas</h3>
+                            <div id="alertas-ia" class="space-y-8"></div>
+                        </div>
+                    </div>
+
+                    <div class="w-96 bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex flex-col h-[620px]">
+                        <div class="px-6 py-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+                            <div class="w-8 h-8 bg-emerald-500 text-white rounded-2xl flex items-center justify-center">🤖</div>
+                            <div>
+                                <p class="font-medium">Assistente de Estoque</p>
+                                <p class="text-xs text-emerald-600 dark:text-emerald-400">Online • Integrado</p>
+                            </div>
+                        </div>
+                        
+                        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-6 text-sm">
+                            </div>
+                        
+                        <div class="p-4 border-t border-zinc-200 dark:border-zinc-800">
+                            <div class="flex gap-2">
+                                <input id="chat-input" type="text" placeholder="Sua mensagem..." 
+                                       class="flex-1 rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-6 py-3 focus:outline-none focus:border-black dark:focus:border-white">
+                                <button onclick="enviarRespostaChat()" class="bg-black dark:bg-white text-white dark:text-black w-12 h-12 rounded-3xl flex items-center justify-center hover:opacity-80">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div onclick="if(event.target.id === 'modal-notif')hideModal()" id="modal-notif" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] backdrop-blur-sm">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-3xl max-w-lg w-full mx-4 p-8 border border-zinc-200 dark:border-zinc-800">
+            <h3 class="text-2xl font-semibold mb-4">Notificação</h3>
+            <div id="modal-conteudo" class="text-zinc-600 dark:text-zinc-400"></div>
+            <button onclick="hideModal()" class="mt-8 w-full py-4 bg-black dark:bg-white text-white dark:text-black font-medium rounded-3xl">FECHAR</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONTROLE DE ACESSO (RBAC) ====================
+        const usuarios = {
+            "mateus.santos012@cs.cruzeirodosul.edu.br": { senha: "123", nome: "Vendedor", role: "Vendedor" },
+            "holiveira006@cs.unicid.edu.br": { senha: "123", nome: "Gerente", role: "Gerente" }
+        };
+
+        let usuarioAtual = null;
+
+        function realizarLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const senha = document.getElementById('login-senha').value;
+            const erro = document.getElementById('login-erro');
+
+            if (usuarios[email] && usuarios[email].senha === senha) {
+                usuarioAtual = usuarios[email];
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                aplicarPermissoes();
+                initApp();
+            } else {
+                erro.classList.remove('hidden');
+            }
+        }
+
+        function fazerLogout() {
+            usuarioAtual = null;
+            document.getElementById('login-form').reset();
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+        }
+
+        function aplicarPermissoes() {
+            // Header
+            document.getElementById('greeting-title').innerText = `Olá! ${usuarioAtual.nome}`;
+            document.getElementById('user-display-name').innerText = usuarioAtual.nome;
+
+            // Restrições Financeiras
+            if (usuarioAtual.role === 'Vendedor') {
+                document.getElementById('card-total-valor').classList.add('hidden');
+                document.getElementById('card-vendas-hoje').classList.add('hidden');
+                document.getElementById('card-vendas-qtd').classList.remove('hidden'); // Mostra versão QTD
+                
+                // Mensagem Inicial Chatbot Vendedor
+                chatHistory = [{ tipo: "ia", msg: "Olá Vendedor! Precisa solicitar reposição ao Gerente? Me diga qual aparelho e enviarei o alerta." }];
+            } else {
+                // Gerente
+                document.getElementById('card-total-valor').classList.remove('hidden');
+                document.getElementById('card-vendas-hoje').classList.remove('hidden');
+                document.getElementById('card-vendas-qtd').classList.add('hidden');
+                
+                // Mensagem Inicial Chatbot Gerente
+                chatHistory = [{ tipo: "ia", msg: "Olá Gerente! Detectei o status do estoque. Posso fazer as estimativas de compra junto aos fornecedores." }];
+            }
+        }
+
+        // ==================== DARK MODE TOGGLE ====================
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // ==================== DADOS (IMAGENS E ESTOQUE) ====================
+        // Dicionário de URLs mockadas para simular imagens reais dos iPhones
+        const imagensModelos = {
+            "iPhone 13": "https://cdn-icons-png.flaticon.com/512/0/566.png", // Usando ícones estéticos de placeholder para evitar links quebrados
+            "iPhone 14": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "iPhone 15": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "iPhone 16": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "iPhone 16e": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "iPhone 17": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "iPhone 17 air": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "iPhone 17 pro": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "iPhone 17 pro Max": "https://cdn-icons-png.flaticon.com/512/0/566.png",
+            "MacBook M1": "https://cdn-icons-png.flaticon.com/512/3254/3254068.png",
+            "AirPods 4": "https://cdn-icons-png.flaticon.com/512/6245/6245107.png",
+            "default": "https://cdn-icons-png.flaticon.com/512/5906/5906059.png"
+        };
+
+        let produtos = JSON.parse(localStorage.getItem('apple_produtos')) || [
+            {
+                id: 1, tipo: "smartphone", modelo: "iPhone 17 pro Max", quantidade: 8, valor: 12999,
+                historicoVendas: [{ qty: 3 }, { qty: 5 }, { qty: 2 }]
+            },
+            {
+                id: 2, tipo: "notebook", modelo: "MacBook M1", quantidade: 12, valor: 6999,
+                historicoVendas: [{ qty: 1 }, { qty: 2 }]
+            },
+            {
+                id: 3, tipo: "airpods", modelo: "AirPods 4", quantidade: 3, valor: 899,
+                historicoVendas: [{ qty: 4 }, { qty: 6 }]
+            }
+        ];
+
+        let chatHistory = [];
+
+        // ==================== FUNÇÕES BÁSICAS ====================
+        function salvarProdutos() {
+            localStorage.setItem('apple_produtos', JSON.stringify(produtos));
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${section}`).classList.remove('hidden');
+            
+            if (section === 'estoque') renderEstoque();
+            if (section === 'editar') renderEditar();
+            if (section === 'dashboard') renderDashboard();
+            if (section === 'ia') renderChat();
+        }
+
+        // ==================== CADASTRO ====================
+        function cadastrarProduto(e) {
+            e.preventDefault();
+            
+            const novo = {
+                id: Date.now(),
+                tipo: document.getElementById('tipo').value,
+                modelo: document.getElementById('modelo').value,
+                quantidade: parseInt(document.getElementById('quantidade').value),
+                valor: parseFloat(document.getElementById('valor').value),
+                historicoVendas: []
+            };
+            
+            // Verifica se já existe para somar
+            let existe = produtos.find(p => p.modelo === novo.modelo);
+            if(existe) {
+                existe.quantidade += novo.quantidade;
+                existe.valor = novo.valor; // Atualiza o preço
+            } else {
+                produtos.push(novo);
+            }
+            
+            salvarProdutos();
+            alert("✅ Produto cadastrado/atualizado com sucesso no estoque!");
+            e.target.reset();
+            showSection('estoque');
+            renderDashboard();
+        }
+
+        // ==================== RENDER ESTOQUE (CARDS) ====================
+        function renderEstoque(filtro = '') {
+            const container = document.getElementById('grid-estoque');
+            container.innerHTML = '';
+            
+            const filtrados = produtos.filter(p => p.modelo.toLowerCase().includes(filtro.toLowerCase()));
+            
+            filtrados.forEach(prod => {
+                const img = imagensModelos[prod.modelo] || imagensModelos["default"];
+                const valorFormatado = (prod.valor).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+                
+                // Restrição de visualização do valor no Card
+                const exibeValor = usuarioAtual.role === 'Gerente' ? `<p class="text-xl font-semibold text-zinc-900 dark:text-white">${valorFormatado}</p>` : `<p class="text-sm font-medium text-zinc-500">Valor oculto</p>`;
+
+                const card = document.createElement('div');
+                card.className = `bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden card-hover border border-zinc-100 dark:border-zinc-800 p-6 flex flex-col items-center text-center`;
+                card.innerHTML = `
+                    <img src="${img}" class="w-32 h-32 object-contain mb-4 opacity-90 dark:invert">
+                    <h4 class="font-semibold text-lg dark:text-white">${prod.modelo}</h4>
+                    <p class="text-zinc-500 text-sm mb-4 capitalize">${prod.tipo}</p>
+                    
+                    <div class="w-full bg-zinc-50 dark:bg-zinc-800 rounded-2xl p-4 mt-auto">
+                        <p class="text-2xl font-bold dark:text-white mb-1">${prod.quantidade} <span class="text-xs font-normal text-zinc-500">unid.</span></p>
+                        ${exibeValor}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            if (filtrados.length === 0) {
+                container.innerHTML = `<p class="col-span-4 text-center py-12 text-zinc-400">Nenhum produto encontrado.</p>`;
+            }
+        }
+
+        function filtrarEstoque() {
+            const busca = document.getElementById('busca').value;
+            renderEstoque(busca);
+        }
+
+        // ==================== EDITAR ====================
+        function renderEditar() {
+            const container = document.getElementById('lista-editar');
+            container.innerHTML = '';
+            
+            produtos.forEach((prod, index) => {
+                const img = imagensModelos[prod.modelo] || imagensModelos["default"];
+                
+                const div = document.createElement('div');
+                div.className = "bg-white dark:bg-zinc-900 rounded-3xl p-6 flex items-center gap-4 border border-zinc-100 dark:border-zinc-800";
+                div.innerHTML = `
+                    <img src="${img}" class="w-12 h-12 object-contain dark:invert">
+                    <div class="flex-1">
+                        <h4 class="font-semibold dark:text-white">${prod.modelo}</h4>
+                        <p class="text-sm text-zinc-500">${prod.quantidade} unid.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="editarProduto(${index})" class="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="excluirProduto(${index})" class="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function editarProduto(index) {
+            const prod = produtos[index];
+            const novaQtd = prompt(`Editar quantidade de ${prod.modelo} (atual: ${prod.quantidade})`, prod.quantidade);
+            if (novaQtd !== null) {
+                prod.quantidade = parseInt(novaQtd);
+                salvarProdutos();
+                renderEditar();
+                renderDashboard();
+            }
+        }
+
+        function excluirProduto(index) {
+            if (confirm("Excluir este produto do sistema?")) {
+                produtos.splice(index, 1);
+                salvarProdutos();
+                renderEditar();
+                renderDashboard();
+            }
+        }
+
+        // ==================== DASHBOARD ====================
+        function renderDashboard() {
+            let totalValor = 0;
+            let totalQtd = 0;
+            
+            produtos.forEach(p => {
+                totalValor += (p.quantidade * p.valor);
+                totalQtd += p.quantidade;
+            });
+            
+            // Só o Gerente vê isso pela limitação do CSS feita no applyPermissoes, mas alimentamos o DOM mesmo assim
+            document.getElementById('total-valor').textContent = `R$ ${totalValor.toLocaleString('pt-BR')}`;
+            // Gerando um número fake para Vendas Hoje em R$ (apenas para manter visual do layout original do Gerente)
+            document.getElementById('vendas-hoje').textContent = `R$ ${(totalValor * 0.05).toLocaleString('pt-BR')}`;
+            
+            // Todos veem a quantidade total
+            document.getElementById('total-qtd-estoque').textContent = totalQtd;
+            
+            const baixos = produtos.filter(p => p.quantidade <= 5).length;
+            document.getElementById('alerta-count').textContent = baixos || '0';
+            
+            const destaqueContainer = document.getElementById('destaque-vendas');
+            destaqueContainer.innerHTML = produtos.slice(0, 5).map(p => `
+                <div class="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-4 text-center">
+                    <img src="${imagensModelos[p.modelo] || imagensModelos["default"]}" class="mx-auto mb-3 w-16 h-16 object-contain dark:invert">
+                    <p class="font-medium text-sm dark:text-white truncate" title="${p.modelo}">${p.modelo}</p>
+                    <p class="text-xs text-emerald-600 dark:text-emerald-400">${p.quantidade} em estoque</p>
+                </div>
+            `).join('');
+        }
+
+        // ==================== ANÁLISE IA ====================
+        function analisarEstoqueIA() {
+            const container = document.getElementById('resultado-ia');
+            const alertasDiv = document.getElementById('alertas-ia');
+            alertasDiv.innerHTML = '';
+            
+            container.classList.remove('hidden');
+            
+            produtos.forEach(prod => {
+                if (prod.quantidade <= 8) {
+                    const sugestao = 15; // Fixo para exemplo
+                    const acao = usuarioAtual.role === 'Vendedor' ? 
+                                 `<button onclick="iniciarChatbotVendedor('${prod.modelo}')" class="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-2xl text-sm font-medium">Solicitar Reposição ao Gerente</button>` :
+                                 `<button onclick="iniciarChatbotGerente('${prod.modelo}', ${sugestao})" class="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-2xl text-sm font-medium">Autorizar Compra (Fornecedor)</button>`;
+
+                    alertasDiv.innerHTML += `
+                    <div class="border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="font-semibold text-lg dark:text-white">${prod.modelo}</p>
+                                <p class="text-sm text-zinc-500">Estoque atual: <strong>${prod.quantidade}</strong></p>
+                            </div>
+                            <span class="text-red-500 font-medium bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-full text-xs">BAIXO</span>
+                        </div>
+                        ${acao}
+                    </div>`;
+                }
+            });
+            
+            if (alertasDiv.innerHTML === '') {
+                alertasDiv.innerHTML = `<p class="text-emerald-600 dark:text-emerald-400 text-center py-6">✅ Estoque saudável no momento.</p>`;
+            }
+        }
+
+        // ==================== CHATBOT ====================
+        function iniciarChatbotVendedor(modelo) {
+            chatHistory.push({ tipo: "user", msg: `Precisamos repor o estoque de ${modelo}.` });
+            chatHistory.push({ tipo: "ia", msg: `Alerta enviado ao Gerente via WhatsApp e Sistema. Ele avaliará a compra de reposição de ${modelo}.` });
+            renderChat();
+        }
+
+        function iniciarChatbotGerente(modelo, qtd) {
+            chatHistory.push({ tipo: "ia", msg: `Fornecedor integrado: Deseja autorizar a compra de ${qtd} unidades do ${modelo}?` });
+            renderChat();
+        }
+
+        function renderChat() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = chatHistory.map(msg => `
+                <div class="${msg.tipo === 'ia' ? 'flex justify-start' : 'flex justify-end'}">
+                    <div class="${msg.tipo === 'ia' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200' : 'bg-black dark:bg-white text-white dark:text-black'} px-5 py-3 rounded-3xl max-w-[80%] text-sm">
+                        ${msg.msg}
+                    </div>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function enviarRespostaChat() {
+            const input = document.getElementById('chat-input');
+            if (!input.value.trim()) return;
+            
+            chatHistory.push({ tipo: "user", msg: input.value });
+            
+            setTimeout(() => {
+                let respostaIA = usuarioAtual.role === 'Vendedor' ? 
+                    "Anotado. O gerente receberá este recado no painel dele." : 
+                    "Ordem processada! Enviando solicitação automática ao distribuidor Apple.";
+                
+                chatHistory.push({ tipo: "ia", msg: respostaIA });
+                renderChat();
+            }, 800);
+            
+            renderChat();
+            input.value = '';
+        }
+
+        function simularNotificacao() {
+            const txt = usuarioAtual.role === 'Vendedor' ? "Gerente aprovou a reposição." : "Vendedor solicitou reposição.";
+            document.getElementById('modal-conteudo').innerHTML = `<p class="text-lg text-center font-medium">${txt}</p>`;
+            document.getElementById('modal-notif').classList.remove('hidden');
+        }
+
+        function hideModal() {
+            document.getElementById('modal-notif').classList.add('hidden');
+        }
+
+        // ==================== STARTUP APP ====================
+        function initApp() {
+            renderDashboard();
+            showSection('dashboard');
+        }
+    </script>
+</body>
+</html>
